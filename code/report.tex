@@ -1,0 +1,247 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+\title{Report of Hand-Written Digits Classification Problem\\
+}
+
+\author{\IEEEauthorblockN{Junzhou Fang}
+\IEEEauthorblockA{\textit{ECE, UIUC} \\
+Champaign, United States \\
+junzhou5@illinois.edu}
+}
+
+\maketitle
+
+\begin{abstract}
+This report is a summary of the hand-written digits classification problem. We included three methods: logistic regression with feature extraction,
+perceptron, CNN, and a simple algorithm, to solve the problem.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Binary classification, logistic regression, CNN, MNIST
+\end{IEEEkeywords}
+
+\section{Introduction}
+Professor Do's research team has collected a large amount of image hand-written data, but some of the image are blurred
+during the collection due to technological errors. The goal of this report is to classify the images into two categories:
+blurred (represent as 1) and non-blurred (represent as -1). 
+
+\section{Data Preprocessing}
+
+\subsection{Data Deccription}
+
+There are three sets of images: train set, validation set and test set. The train set contains 40000 images, the validation set 
+contains 10000 images and the test set contains 8000 images. Each image is in size of (28,28) and is in black and white. In addition to
+images, there are three text files containing labels of images in each set. We use 1 to represent unblurred images and -1 to represent blurred images.
+
+\subsection{Data Loading}
+We use skimage to load all the images and convert them into a numpy array. We use flatten() to contruct image sets into a 2D array, with each image is a vector.\\
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\linewidth]{load.png}
+    \caption{Loading train images}
+    \label{fig1:Loading train images}
+    \end{figure}
+We also read labels into a numpy array. The index of the array is the index of corresponding image.
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.6\linewidth]{label.png}
+    \caption{Loading train labels}
+    \label{fig2:Loading train labels}
+    \end{figure}
+\subsection{Data Normalization}
+Since BW images has color range from 0 to 255, we use normalization to scale the color range to 0 to 1.
+Initially, we perform an additional normalization using the mean and standard deviation. But later we find out
+that this step has little effect on the accuracy, so we remove it.
+
+
+
+
+\section{Logistic Regression}
+\subsection{Feature Extraction}
+We perform PCA to extract original $28*28$ features into 50. First, we implement the PCA on our own.
+However, later we find out that sklearn's PCA function is much faster and more efficient. Our own PCA is incapable for
+handling this large amount of data, particularly on a personal laptop. Also, we use PCA several times in model tunning. 
+Therefore, we use sklearn's PCA function to perform PCA.
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\linewidth]{PCA.png}
+    \caption{Our PCA}
+    \label{fig3:Our PCA}
+    \end{figure}
+\subsection{Code}
+We implement the logistic regression basing only on numpy.
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\linewidth]{logreg.png}
+    \caption{Logistic Regression}
+    \label{fig4:Logistic Regression}
+    \end{figure}
+Also, we use the following accuracy() to evaluate the model.
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\linewidth]{acc.png}
+    \caption{Accuracy}
+    \label{fig5:Accuracy}
+    \end{figure}
+\\It's worth mentioning that to fit this model, we need to first modify the labels as 0 and 1. The output of the model is also 0 and 1, so we further add some code to convert
+it back to -1 and 1.
+\subsection{Output \& Evaluation}
+We use following code to evaluate and show the result of the model. Here we combine four choices of learning rate (lr) and three choices of epochs.
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{output_lr.png}
+    \caption{Code for output}
+    \label{fig6:Code for output}
+    \end{figure}
+The output is shown as follows. For train accuracy, we are using the entire train set.
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{acc_lr.png}
+    \caption{Output}
+    \label{fig7:Accuracy of Logistic Regression}
+    \end{figure}
+As you can see, the best accuracy is given by (lr = 0.01, epochs = 100). However, even the best accuracy can only achieve
+0.73 on train set and 0.64 on validation set. I think perhaps the reason is that the values for each pixel in the image
+is too extreme, i.e. they are either close to black(0) or close to white(1), as shown in fig8. This makes feature extraction and normalization
+less effective. We have also tried different numbers of features to extract to, but features number ranging from 50 to 256 gives
+similar result. It's hardly visialilzed bacause 256 features nearly blow up my computer. Therefore, we decide to use CNN to solve this problem.
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{extreme.png}
+    \caption{Vector of an image}
+    \label{fig8:Vector of an image}
+    \end{figure}
+
+
+\section{Perceptron}
+Since the logistic regression is not working well, we try to use perceptron to solve the problem. 
+\subsection{Code}
+Perceptron is relatively simple for implementation.
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{perceptron.png}
+    \caption{Perceptron}
+    \label{fig9:Perceptron}
+    \end{figure}
+\subsection{Output \& Evaluation}
+Initially, we use PCA to extract dataset to 50 features. But the result accuracy is close to 0.5, a complete failure. Therefore, we 
+discard the feature extraction and directly perform perceptron. This time the accuracy reach around 0.89 on validation set. Also, running
+time is not a big consideration for this project, since whether using PCA or not only make 10 seconds difference. Therefore, we draw a conclusion
+that the feature extraction is not essential for this problem. \\
+We also try to tune the learning rate and epochs. It turns out that if the epochs is 100, a learning rate ranging from 0.01 to 0.1 give similar performance.
+This can be explained by the fact that blurred and unblurred images are quite different, and thus a local mininum of loss function is easily reached.\\
+This also lead us to wonder if there is a even simpler way to solve the problem.
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{accu_per.png}
+    \caption{Accuracy of Perceptron}
+    \label{fig10:Accuracy of Perceptron}
+    \end{figure}
+
+\section{A Simple Approach}
+When I try to improve the logistic regression, it's really hard due to the discussion above. However, I find some interesting
+feature. If you compare a blurred and an unblurred image of the same digit, you will realize that the most significant difference
+is the number of grey pixels. Typically, a blurred image will have more pixels with value ranging between $(0.3 * 255, 0.7 * 255)$, about 
+2 to 6 times of the number of pixels in this range for an unblurred image. Therefore, we come up with a simple algorithm that counts the number of
+pixels in range $(0.3 * 255, 0.7 * 255)$, use different thresholds values to categorize whether a picure is blurred or not.
+\subsection{Code}
+First, process the data to get an array to count the number of pixels that lies in the range for each image.
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{simple.png}
+    \caption{Simple Algorithm Data}
+    \label{fig9:Simple Algorithm Data}
+    \end{figure}
+And make the decision compeletely on the thresholds, and evaluate the accuracy.
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{simp.png}
+    \caption{Simple Algorithm}
+    \label{fig10:Simple Algorithm}
+    \end{figure}
+\subsection{Threshold}
+We try several threshold, and find the best one on both train set and validation set is 100.
+The accuracy can achieve $0.89$ on both train set and validation set.
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{threshold.png}
+    \caption{Thresholds Evaluation}
+    \label{fig11:Thresholds Evaluation}
+    \end{figure}
+
+\section{CNN}
+
+\subsection{Data Preprocessing}
+The reason we adopt CNN to solve the problem is that CNN is powerful in handling image data, especially in this case the image is 
+in good quality and the ouput is only binary. Its convolution layer will be so happy to get this problem done.
+Here we directly load all the train images into a (28*28, 40000) array. Given the dicovery that both blurred and unblurred images have
+same value in black area, one may leave the outer black edges to reduce input size. However, later we find that CNN is so powerful, that 
+the time to train the model in original size is even faster than a for loop to remove all the edge and then train. Therefore,
+we directly use original size to train the model.
+
+
+\subsection{Model Construction}
+We use tensorflow and keras to contruct the model. More specifically, there are three convolutional layers with ReLU activation function,
+each layer is followed by a max pooling layer. And then we use a flatten layer to convert the 2D array into 1D array, applying a dense layer
+of 512 neurons to keep information. Finally, a dense layer of 1 neuron is used for binary output.
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{CNN.png}
+    \caption{CNN}
+    \label{fig9:CNN}
+    \end{figure}
+
+
+
+\subsection{Output Evaluation}
+Initially, we set epochs to 5 and batch size to 50. This small epochs compeletely comes from my faith in CNN.
+It's still surprising to see this combiantion of epochs and batch size gives an accuracy of 1.
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{output_cnn.png}
+    \caption{Output}
+    \label{fig10:Output}
+    \end{figure}
+To further concrete this is not a lie, I print the first 31 albels on train set to mannually check, and they are indeed the same.\\
+Good work CNN!
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{cnnnb.png}
+    \caption{mannually check}
+    \label{fig11:mannually check}
+    \end{figure}
+\section{test set}
+We use both logistic regression and CNN to predict the test set and make several prediction files: test\_PERCP.txt test\_CNN.txt, test\_LR.txt, and test\_SIMPLE.txt, with 
+the similar format as the train.txt and validation.txt.
+
+\section*{Acknowledgment}
+
+Thanks Professor Do and Qian Jiang for the chance to perform this task. To be honest, I'm not sure whether my logistic regression is
+correctly implemented because the accuracy is so low. But this is a good chance to dig deeply into the concept, as previouly I will 
+directly import libriaries to do the job. I have learned a lot from this implementation.
+
+
+
+\begin{thebibliography}{00}
+\bibitem{b1} Verma, M. (2022, May 8). Binary classification using Convolution Neural Network (CNN) model. Medium. https://medium.com/@mayankverma05032001/binary-classification-using-convolution-neural-network-cnn-model-6e35cdf5bdbb 
+\end{thebibliography}
+
+\end{document}
+About
+About us
+Our values
+Careers
+Press & awards
+Blog
+Learn
